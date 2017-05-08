@@ -400,6 +400,44 @@ angular.module('myModule', ['Devise']).
     });
 ```
 
+### Auth.confirmEmail(creds)
+
+Use `Auth.confirmEmail()` to confirm user email. Keep
+in mind, credentials are sent in plaintext; use a SSL connection to
+secure them. `creds` is an object that should contain confirmation_token.
+`Auth.confirmEmail()` will return a
+promise that will resolve to the new user data. See
+[Auth.parse(response)](#authparseresponse) to customize how the response
+is parsed into a user. Then a `devise:confirm-email-successfully` event will be broadcast.
+
+```javascript
+angular.module('myModule', ['Devise']).
+    controller('myCtrl', function(Auth) {
+        var parameters = {
+            confirmation_token:'confirmation-token',
+        };
+
+        Auth.confirmEmail(parameters).then(function(new_data) {
+            console.log(new_data); // => {id: 1, ect: '...'}
+        }, function(error) {
+            // Confirm email failed...
+        });
+
+        $scope.$on('devise:confirm-email-successfully', function(event) {
+            // ...
+        });
+    });
+```
+By default, `confirmEmail` will GET to '/users/confirmation.json'. The path and HTTP
+method used to confirm email are configurable using:
+
+```javascript
+angular.module('myModule', ['Devise']).
+    config(function(AuthProvider) {
+        AuthProvider.confirmEmailPath('path/to/server.json');
+        AuthProvider.confirmEmailMethod('GET');
+    });
+```
 
 Interceptor
 -----------

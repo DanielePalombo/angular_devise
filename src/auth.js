@@ -8,7 +8,8 @@ devise.provider('Auth', function AuthProvider() {
         update: '/users.json',
         register: '/users.json',
         sendResetPasswordInstructions: '/users/password.json',
-        resetPassword: '/users/password.json'
+        resetPassword: '/users/password.json',
+        confirmEmail: '/users/confirmation.json'
     };
 
     /**
@@ -20,7 +21,8 @@ devise.provider('Auth', function AuthProvider() {
         update: 'PUT',
         register: 'POST',
         sendResetPasswordInstructions: 'POST',
-        resetPassword: 'PUT'
+        resetPassword: 'PUT',
+        confirmEmail: 'GET'
     };
 
     /**
@@ -62,6 +64,10 @@ devise.provider('Auth', function AuthProvider() {
         };
 
         if (data) {
+            if (config.method === 'get') {
+                config.params = data;
+            }
+
             if (resourceName) {
                 config.data = {};
                 config.data[resourceName] = data;
@@ -339,6 +345,33 @@ devise.provider('Auth', function AuthProvider() {
                     .then(service.parse)
                     .then(save)
                     .then(broadcast('reset-password-successfully'));
+            },
+
+            /**
+             * A confirm function to confirm user email.
+             * Keep in mind, credentials are sent
+             * in plaintext; use a SSL connection to secure them.
+             * By default, `confirmEmail` will GET to '/users/confirmation.json'.
+             *
+             * The path and HTTP method used to confirm email are configurable
+             * using
+             *
+             *  angular.module('myModule', ['Devise']).
+             *  config(function(AuthProvider) {
+             *      AuthProvider.confirmEmailPath('path/to/server.json');
+             *      AuthProvider.confirmEmailMethod('GET');
+             *  });
+             *
+             * @param {Object} [creds] A hash containing confirmation_token.
+             * @returns {Promise} A $http promise that will be resolved or
+             *                  rejected by the server.
+             */
+            confirmEmail: function(creds) {
+                creds = creds || {};
+                return $http(httpConfig('confirmEmail', creds))
+                    .then(service.parse)
+                    .then(save)
+                    .then(broadcast('confirm-email-successfully'));
             },
 
             /**
