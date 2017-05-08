@@ -518,6 +518,66 @@ describe('Provider: Devise.Auth', function () {
         });
     });
 
+    describe('.confirmEmail', function() {
+        var user;
+        var postCallback;
+        function constantTrue() {
+            return true;
+        }
+        function callbackWraper(data) {
+            data = JSON.parse(data);
+            return postCallback(data);
+        }
+
+        beforeEach(function() {
+            postCallback = constantTrue;
+            user = {user: { id: 1, name: 'test', email: 'test@email.com', password: 'password', confirmed: true}};
+            $httpBackend.expect('GET', '/users/confirmation.json?confirmation_token=confirmation-token', callbackWraper).respond(user);
+        });
+        afterEach(function() {
+            $httpBackend.verifyNoOutstandingExpectation();
+            $httpBackend.verifyNoOutstandingRequest();
+        });
+
+        it('GETs to /users/confirmation.json', function() {
+            Auth.confirmEmail({confirmation_token:'confirmation-token'});
+            $httpBackend.flush();
+        });
+
+        it('GETs updated data', function() {
+            var u = {confirmation_token:'confirmation-token'};
+            postCallback = function(data) {
+                return jsonEquals(data.user, u);
+            };
+            Auth.confirmEmail(u);
+            $httpBackend.flush();
+        });
+
+        it('returns a promise', function() {
+            expect(Auth.confirmEmail({confirmation_token:'confirmation-token'}).then).toBeDefined();
+            $httpBackend.flush();
+        });
+
+        it('resolves promise to currentUser', function() {
+            var callback = jasmine.createSpy('callback');
+            Auth.confirmEmail({confirmation_token:'confirmation-token'}).then(callback);
+
+            $httpBackend.flush();
+
+            expect(callback).toHaveBeenCalledWith(user);
+        });
+
+        it('broadcasts the confirm-email-successfully event after a sucessful confirmEmail', function() {
+            var callback = jasmine.createSpy('callback');
+            $rootScope.$on('devise:confirm-email-successfully', callback);
+
+            Auth.confirmEmail({confirmation_token:'confirmation-token'});
+            $httpBackend.flush();
+
+            expect(callback).toHaveBeenCalledWith(jasmine.any(Object), user);
+        });
+    });
+
     describe('.parse', function() {
         beforeEach(function() {
             var response = {id: 1, name: 'test', email: 'test@email.com'};
